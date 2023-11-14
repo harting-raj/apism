@@ -28,6 +28,10 @@ const Tasks = sequelize.define('tasks', {
         type: DataTypes.UUID,
         allowNull: true,
     },
+    operatorName:{
+       type:DataTypes.STRING,
+       allowNull:true, 
+    },
     createdAT: {
         type: DataTypes.DATE,
         allowNull: false

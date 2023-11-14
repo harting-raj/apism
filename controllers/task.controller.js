@@ -1,6 +1,6 @@
 import sequelize from "../config/database.js";
 //import socketModule from "../app.js";
-import { AddBins, AddItems, ServeItems, Tasks, TransferBin, TransferItem } from '../models/associations.js'
+import { Users, AddBins, AddItems, ServeItems, Tasks, TransferBin, TransferItem } from '../models/associations.js'
 import { io } from "../app.js"
 import { Op } from "sequelize";
 
@@ -90,26 +90,37 @@ export default {
     // console.log(id);
     if (id) {
       try {
+        let tasks;
+        const user = await Users.findOne({ where: { id: id } })
+        console.log(user.role);
+        if (user.role === "supervisor") {
+          // console.log(user.role);
+          tasks = await Tasks.findAll({ where: { supervisorID: id } });
+        }
+        else {
+          tasks = await Tasks.findAll({ where: { operatorID: { [Op.or]: [id, null] } } });
+        }
         // const taskList = [];
-        const tasks = await Tasks.findAll({ where: { operatorID: { [Op.or]: [id, null] } } });
+
         //console.log(tasks);
         const taskList = await Promise.all(tasks.map(async (task) => {
           let details;
+          //const operator = await Users.findOne({ where: { id: task.operatorID } })
           switch (task.taskType) {
             case "serveItem":
-              details = await ServeItems.findOne({ where: { taskID: task.taskID } });
+              details = await ServeItems.findAll({ where: { taskID: task.taskID } });
               break;
             case "addItem":
-              details = await AddItems.findOne({ where: { taskID: task.taskID } });
+              details = await AddItems.findAll({ where: { taskID: task.taskID } });
               break;
             case "addBin":
-              details = await AddBins.findOne({ where: { taskID: task.taskID } });
+              details = await AddBins.findAll({ where: { taskID: task.taskID } });
               break;
             case "transferBin":
-              details = await TransferBin.findOne({ where: { taskID: task.taskID } });
+              details = await TransferBin.findAll({ where: { taskID: task.taskID } });
               break;
             case "transferItem":
-              details = await TransferItem.findOne({ where: { taskID: task.taskID } });
+              details = await TransferItem.findAll({ where: { taskID: task.taskID } });
               break;
           }
           if (details) {

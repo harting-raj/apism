@@ -41,7 +41,7 @@ const Bins = sequelize.define('bins', {
     rackID: {
         type: DataTypes.STRING,
         allowNull: false,
-    }
+    },
 },{
     timestamps: false
   })

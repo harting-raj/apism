@@ -1,7 +1,8 @@
-import { Sequelize, where } from 'sequelize';
+import { Sequelize, where, Op } from 'sequelize';
 import sequelize from '../config/database.js';
 import { Bins, Users, Racks, Items, Positions } from '../models/associations.js'
 import { binList, itemList, emptyBinsList } from '../utils/utils.js';
+
 
 export default {
     getComponentCount: async (req, res) => {
@@ -58,17 +59,18 @@ export default {
     getRackList: async (req, res) => {
         try {
             const totalRacks = await Racks.count() ?? 0;
-            if(totalRacks<=0){
-                
-                res.status(200).json({ rackList:{} });
-            }else{
-            const rackList = await Racks.findAll({
-                attributes: ['rackID', 'row', 'column', [sequelize.fn('COUNT', sequelize.col('bins.binID')), 'binCount']],
-                include: [{ model: Bins, as: 'bins', attributes: [] }], group: ['Racks.rackID']
-                // limit: 2,
-                // offset: 2
-            })
-            res.status(200).json({ rackList })}
+            if (totalRacks <= 0) {
+
+                res.status(200).json({ rackList: {} });
+            } else {
+                const rackList = await Racks.findAll({
+                    attributes: ['rackID', 'row', 'column', [sequelize.fn('COUNT', sequelize.col('bins.binID')), 'binCount']],
+                    include: [{ model: Bins, as: 'bins', attributes: [] }], group: ['Racks.rackID']
+                    // limit: 2,
+                    // offset: 2
+                })
+                res.status(200).json({ rackList })
+            }
         } catch (error) {
             res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
         }
@@ -156,44 +158,66 @@ export default {
             res.status(400).json({ error: true, message: "User role not found" })
         }
     },
-    getRackWithPosition:async(req,res)=>{
-     try {
-        const totalRacks = await Racks.count() ?? 0;
-        if(totalRacks<=0){
-            
-            res.status(200).json({ rackList:[] });
-        }else{
-            sequelize.query('Select racks.rackID, positions.positionName from racks LEFT JOIN positions On racks.rackID=positions.rackID LEFT JOIN bins ON positions.positionID=bins.positionID WHERE bins.positionID IS NULL',{type:Sequelize.QueryTypes.SELECT,model:Racks,mapToModel:true}).then((results)=>{
-               // console.log(results);
-            const rackList=[];
+    getRackWithPosition: async (req, res) => {
+        try {
+            const totalRacks = await Racks.count() ?? 0;
+            if (totalRacks <= 0) {
 
-            results.forEach((result)=>{
-               // console.log(result.dataValues);
-                const {rackID}=result;
-                const positionName=result.dataValues.positionName;
-               if(rackID && positionName){
-                let rack=Object.values(rackList).find((item)=>item.rackID===rackID);
-                if(!rack){
-                    rack={
-                        rackID,
-                        position:[],
-                    };
-                    rackList.push(rack);
-                }
+                res.status(200).json({ rackList: [] });
+            } else {
+                sequelize.query('Select racks.rackID, positions.positionName from racks LEFT JOIN positions On racks.rackID=positions.rackID LEFT JOIN bins ON positions.positionID=bins.positionID WHERE bins.positionID IS NULL', { type: Sequelize.QueryTypes.SELECT, model: Racks, mapToModel: true }).then((results) => {
+                    // console.log(results);
+                    const rackList = [];
 
-                rack.position.push(positionName);}
-            });
-            res.status(200).json({ rackList });
-           })
-        // Racks.findAll({
-        //     attributes: ['rackID',],
-        //     include: [{ model: Positions, as: 'positions', attributes: ['positionID'],include:[{model:Bins,as:'position',attributes:[],required:false}] }],
-        // })
-        //[sequelize.fn('COUNT', sequelize.col('positions.positionID')), 'positionCount']   [sequelize.fn('COUNT', sequelize.col('positions.positionID')), 'positionCount']
-     }
-     } catch (error) {
-        res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
-     }
+                    results.forEach((result) => {
+                        // console.log(result.dataValues);
+                        const { rackID } = result;
+                        const positionName = result.dataValues.positionName;
+                        if (rackID && positionName) {
+                            let rack = Object.values(rackList).find((item) => item.rackID === rackID);
+                            if (!rack) {
+                                rack = {
+                                    rackID,
+                                    position: [],
+                                };
+                                rackList.push(rack);
+                            }
+
+                            rack.position.push(positionName);
+                        }
+                    });
+                    res.status(200).json({ rackList });
+                })
+                // Racks.findAll({
+                //     attributes: ['rackID',],
+                //     include: [{ model: Positions, as: 'positions', attributes: ['positionID'],include:[{model:Bins,as:'position',attributes:[],required:false}] }],
+                // })
+                //[sequelize.fn('COUNT', sequelize.col('positions.positionID')), 'positionCount']   [sequelize.fn('COUNT', sequelize.col('positions.positionID')), 'positionCount']
+            }
+        } catch (error) {
+            res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
+        }
+    },
+    getRackWithBins: async (req, res) => {
+        try {
+            const totalRacks = await Racks.count() ?? 0;
+            //  const { itemID } = req.params;
+            if (totalRacks <= 0) {
+
+                res.status(200).json({ rackList: [] });
+            } else {
+                const rackList = await Racks.findAll(
+                    {
+                        attributes: ['rackID',],
+                        include: [{ model: Bins, as: 'bins', attributes: ['binID', 'quantity', 'category'], where: { quantity: { [Op.lt]: 60 } } }],
+                        having: Sequelize.literal('Count(bins.binID)>0'),
+                        group: ['bins.binID']
+                    }
+                )
+                res.status(200).json({ rackList });
+            }
+        } catch (error) {
+            res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
+        }
     }
-
 }
