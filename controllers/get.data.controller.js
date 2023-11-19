@@ -188,11 +188,7 @@ export default {
                     });
                     res.status(200).json({ rackList });
                 })
-                // Racks.findAll({
-                //     attributes: ['rackID',],
-                //     include: [{ model: Positions, as: 'positions', attributes: ['positionID'],include:[{model:Bins,as:'position',attributes:[],required:false}] }],
-                // })
-                //[sequelize.fn('COUNT', sequelize.col('positions.positionID')), 'positionCount']   [sequelize.fn('COUNT', sequelize.col('positions.positionID')), 'positionCount']
+
             }
         } catch (error) {
             res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })

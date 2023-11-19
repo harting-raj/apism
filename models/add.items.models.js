@@ -9,7 +9,7 @@ const AddItems = sequelize.define('additems', {
         allowNull: false,
     },
     taskID: {
-        type: DataTypes.STRING,
+        type: DataTypes.UUID,
         allowNull: false,
     },
     rackID: {
@@ -69,9 +69,9 @@ const AddItems = sequelize.define('additems', {
         type: DataTypes.INTEGER,
         allowNull: true,
     }
-},{
+}, {
     timestamps: false
-  })
+})
 
 
 

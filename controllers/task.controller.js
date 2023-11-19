@@ -13,15 +13,24 @@ export default {
     const { supervisorID, items } = req.body;
     if (supervisorID && items) {
       try {
-        //const { rackID, binID, position, ...itemDetail } = items;
         const currentDate = new Date();
+        console.log(currentDate)
         sequelize.transaction(async (t) => {
-          const task = await Tasks.create({ supervisorID: supervisorID, taskType: 'addItem', createdAt: currentDate, }, { transaction: t });
-          items.forEach(element => {
-            element.taskID = task.taskID
+          const task = await Tasks.create({ supervisorID: supervisorID, taskType: 'addItem', createdAT: currentDate, }, { transaction: t });
+          const promises = items.map(async (element) => {
+            element.taskID = task.taskID;
+            const { bins, ...item } = element;
+
+            const binPromises = bins.map(async (bin) => {
+              item.binID = bin.binID;
+              item.rackID = bin.rackID;
+              console.log(item.itemName);
+              return await AddItems.create(item, { transaction: t });
+            });
+            return Promise.all(binPromises);
           });
-          const addItem = await AddItems.bulkCreate(items);
-          io.emit('newTask', { task })
+          await Promise.all(promises);
+          io.emit("newTask", { task });
           res.status(201).json({ error: false, message: "Task Created Successfully" })
         })
       } catch (error) {

@@ -1,7 +1,7 @@
 import sequelize from "../config/database.js";
 import { Sequelize, DataTypes } from 'sequelize';
 
-const ServeItems = sequelize.define('additems', {
+const ServeItems = sequelize.define('serveitems', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,

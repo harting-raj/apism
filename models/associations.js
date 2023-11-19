@@ -16,7 +16,7 @@ Racks.hasMany(Positions, { foreignKey: 'rackID', targetKey: 'rackID', as: 'posit
 Racks.hasMany(Bins, { foreignKey: 'rackID', targetKey: 'rackID', as: 'bins' })
 Items.hasMany(Bins, { foreignKey: 'itemID', targetKey: 'itemID', as: 'bins' })
 Positions.belongsTo(Racks, { foreignKey: 'rackID', tartgetKey: 'rackID', as: 'rack' });
-Positions.hasOne(Bins,{foreignKey: 'positionID', targetKey: 'positionID', as: 'position' })
+Positions.hasOne(Bins, { foreignKey: 'positionID', targetKey: 'positionID', as: 'position' })
 Bins.belongsTo(Users, { foreignKey: 'addedByID', as: 'addedByUser' });
 Bins.belongsTo(Users, { foreignKey: 'lastAccessedBy', as: 'lastAccessedByUser' });
 Bins.belongsTo(Users, { foreignKey: 'assignedByID', as: 'assignedByUser' });
@@ -28,30 +28,30 @@ Bins.belongsTo(Items, { foreignKey: 'itemID', targetKey: 'itemID', as: 'item' })
 //task
 
 Tasks.hasMany(AddItems, { foreignKey: 'taskID', as: 'addItems' }),
-    Tasks.hasMany(ServeItems, { foreignKey: 'taskID', as: 'serveItems' }),
+Tasks.hasMany(ServeItems, { foreignKey: 'taskID', as: 'serveItems' }),
     Tasks.hasMany(TransferBin, { foreignKey: 'taskID', as: 'transferBins' }),
     Tasks.hasMany(TransferItem, { foreignKey: 'taskID', as: 'transferItems' })
-    Tasks.hasMany(AddBins,{foreignKey:'taskID',as:'addBins'})
+Tasks.hasMany(AddBins, { foreignKey: 'taskID', as: 'addBins' })
 ServeItems.belongsTo(Tasks, { foreignKey: 'taskID', as: 'task' })
 AddItems.belongsTo(Tasks, { foreignKey: 'taskID', as: 'task' })
 TransferItem.belongsTo(Tasks, { foreignKey: 'taskID', as: 'task' })
 TransferBin.belongsTo(Tasks, { foreignKey: 'taskID', as: 'task' })
-AddBins.belongsTo(Tasks,{foreignKey:'taskID',as:'task'})
+AddBins.belongsTo(Tasks, { foreignKey: 'taskID', as: 'task' })
 
-Tasks.belongsTo(Users,{foreignKey:'supervisorID',as:'supervisor'})
-Tasks.belongsTo(Users,{foreignKey:'operatorID',as:'operator'})
+Tasks.belongsTo(Users, { foreignKey: 'supervisorID', as: 'supervisor' })
+Tasks.belongsTo(Users, { foreignKey: 'operatorID', as: 'operator' })
 
 export {
     Racks,
     Items,
     Users,
     Positions,
-       AddItems,
+    AddItems,
     ServeItems,
     TransferBin,
     TransferItem,
     AddBins,
-    Bins ,
+    Bins,
     Tasks,
-    
+
 }
