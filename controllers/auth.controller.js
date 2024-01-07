@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs'
 import Users from '../models/user.model.js'
 import jwt from 'jsonwebtoken';
-
-
+import {io} from '../app.js';
+import Notifications from '../models/notification.model.js';
 export default {
     registerUser: async (req, res) => {
 
@@ -20,7 +20,17 @@ export default {
                     });
                     const accessToken = jwt.sign({ userID: newUser.id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '5d' });
                     const refreshToken = jwt.sign({ userID: newUser.id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: '30d' });
-
+                    if(role==='supervisor'){
+                    
+                        await Notifications.create({ title: 'New Member', message: `New supervisor ${firstName} has joined.`,receiverType:'all',priority:'normal' })
+                    }
+                    else{
+                        await Notifications.create({ title: 'New Member', message: `New operator ${firstName} has joined.`,receiverType:'all',priority:'normal' })
+                    }
+                   
+                        io.emit("database-updated");
+                        io.emit("supervisor-notify");
+                        io.emit('operator-notify');
                     res.status(201).json({ error: false, message: 'User register successfully', accessToken, refreshToken });
                 } else {
                     res.status(409).send({ error: true, message: "Email already registered" });
@@ -45,7 +55,7 @@ export default {
                     const isMatch = await bcrypt.compare(password, user.password);
                     if (isMatch && role == user.role) { //check if email and password match
 
-                        const accessToken = jwt.sign({ userID: user.id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '5d' });
+                        const accessToken = jwt.sign({ userID: user.id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '1d' });
                         const refreshToken = jwt.sign({ userID: user.id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: '30d' });
                         return res.status(200).json({ error: false, message: "Login successful", accessToken, refreshToken }); //return success message
                     }
@@ -116,7 +126,8 @@ export default {
         if (user) {
             try {
                 const accessToken = jwt.sign({ userID: user.id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '5d' });
-                return res.status(200).json({ error: false, message: "Access token regenerated successfully", accessToken });
+                const refreshToken = jwt.sign({ userID: user.id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: '30d' });
+                return res.status(200).json({ error: false, message: "Access token regenerated successfully", accessToken,refreshToken });
             } catch (error) {
                 return res.status(500).json({ error: true, message: "Token creation error" }); //return error message
             }

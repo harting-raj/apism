@@ -15,6 +15,7 @@ router.use('/itemdetail/:itemID', authMiddleware.checkUserAuth)
 router.use('/userlist/:role', authMiddleware.checkUserAuth)
 router.use('/lowquantity', authMiddleware.checkUserAuth)
 router.use('/exireditems', authMiddleware.checkUserAuth)
+router.use('/gettasknumber', authMiddleware.checkUserAuth)
 
 
 router.get('/home', getDataController.getComponentCount)
@@ -30,5 +31,7 @@ router.get('/lowquantity', getReportController.getLowQuantityItems)
 router.get('/expireditems', getReportController.getExpiredItems)
 router.get('/rackwithposition', getDataController.getRackWithPosition)
 router.get('/rackwithbins', getDataController.getRackWithBins)
+router.get('/gettasknumber', getReportController.getTaskNumber)
+router.get('/getLastAccessedList',getReportController.getLastAccessedList)
 
 export default router;

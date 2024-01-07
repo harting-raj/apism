@@ -24,6 +24,10 @@ const ServeItems = sequelize.define('serveitems', {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    position:{
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
     quantity: {
         type: DataTypes.INTEGER,
         allowNull: false,

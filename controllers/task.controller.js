@@ -1,12 +1,8 @@
 import sequelize from "../config/database.js";
 //import socketModule from "../app.js";
-import { Users, AddBins, AddItems, ServeItems, Tasks, TransferBin, TransferItem } from '../models/associations.js'
+import { Users, AddBins, AddItems, ServeItems, Tasks, TransferBin, TransferItem, Bins, Positions, Items } from '../models/associations.js'
 import { io } from "../app.js"
 import { Op } from "sequelize";
-
-
-
-
 
 export default {
   addItemTask: async (req, res) => {
@@ -22,15 +18,22 @@ export default {
             const { bins, ...item } = element;
 
             const binPromises = bins.map(async (bin) => {
+              const binPosition = await Bins.findOne({ where: { binID: bin.binID } });
+              const position = await Positions.findOne({ where: { positionID: binPosition.positionID } })
+              console.log(binPosition);
+              console.log(position);
               item.binID = bin.binID;
               item.rackID = bin.rackID;
-              console.log(item.itemName);
+              item.totalQuantity = bin.quantity;
+              item.positionName = position.positionName;
+              console.log(item.totalQuantity);
               return await AddItems.create(item, { transaction: t });
             });
             return Promise.all(binPromises);
           });
           await Promise.all(promises);
           io.emit("newTask", { task });
+          console.log("its ok")
           res.status(201).json({ error: false, message: "Task Created Successfully" })
         })
       } catch (error) {
@@ -68,16 +71,23 @@ export default {
   },
   serveItemTask: async (req, res) => {
     const { supervisorID, items } = req.body;
+    console.log(items);
     if (supervisorID && items) {
       try {
         const currentDate = new Date();
         sequelize.transaction(async (t) => {
           const task = await Tasks.create({ supervisorID: supervisorID, taskType: 'serveItem', createdAT: currentDate, }, { transaction: t });
-          items.forEach(element => {
+          await Promise.all(items.map(async element => {
             element.taskID = task.taskID;
-          });
-          const serveItem = await ServeItems.bulkCreate(items, { transaction: t });
-          io.emit('newTask', { task, serveItem })
+            const bin = await Bins.findOne({ where: { binID: element.binID } }, { transaction: t })
+
+            const position = await Positions.findOne({ where: { positionID: bin.positionID } }, { transaction: t })
+            element.position = position.positionName;
+            const serveItem = await ServeItems.create(element, { transaction: t });
+          }));
+
+
+          io.emit('newTask', { task })
           res.status(201).json({ error: false, message: "Order Created Successfully" })
         })
       } catch (error) {
@@ -147,9 +157,9 @@ export default {
     }
 
   },
-  hardware: async(req,res)=>{
+  hardware: async (req, res) => {
     console.log("Hardware connected")
-    res.status(200).json({message:"All ok from here"});
+    res.status(200).json({ message: "All ok from here" });
   }
 
 }

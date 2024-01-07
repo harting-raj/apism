@@ -63,7 +63,7 @@ export default {
             const totalRacks = await Racks.count() ?? 0;
             if (totalRacks <= 0) {
 
-                res.status(200).json({ rackList: {} });
+                res.status(200).json({ rackList: [] });
             } else {
                 const rackList = await Racks.findAll({
                     attributes: ['rackID', 'row', 'column', [sequelize.fn('COUNT', sequelize.col('bins.binID')), 'binCount']],
@@ -127,9 +127,19 @@ export default {
         const { binID } = req.params;
         if (binID) {
             try {
-                const binDetail = await Bins.findOne({ where: { binID: binID }, attributes: ["binID", "rackID", "itemID", "quantity"], include: [{ model: Items, as: 'item', attributes: ['itemID', 'itemName', 'manufacturer', 'expiryDate', 'totalQuantity'] }] })
 
-                res.status(200).json({ error: false, binDetail });
+                let binDetail = await Bins.findOne({ where: { binID: binID }, attributes: ["binID", "rackID", "itemID", "quantity", "positionID"], include: [{ model: Items, as: 'item', attributes: ['itemID', 'itemName', 'manufacturer', 'expiryDate', 'totalQuantity'] }] })
+                if (binDetail) {
+
+                    const position = await Positions.findOne({ where: { positionID: binDetail.positionID } })
+                    console.log(position);
+                    binDetail.dataValues.positionName = position ? position.positionName : '';
+
+                    res.status(200).json({ error: false, binDetail });
+                } else {
+                    res.status(404).json({ error: true, message: "Bin Id not in the database" });
+                }
+
             } catch (error) {
                 res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
             }
@@ -141,7 +151,7 @@ export default {
         const { itemID } = req.params;
         if (itemID) {
             try {
-                const itemDetail = await Items.findOne({ where: { itemID: itemID }, include: { model: Bins, as: 'bins', attributes: ['binID', 'rackID', 'positionID'], } });
+                const itemDetail = await Items.findOne({ where: { itemID: itemID }, include: { model: Bins, as: 'bins', attributes: ['binID', 'rackID', 'quantity'], } });
                 res.status(200).json({ error: false, itemDetail });
             } catch (error) {
                 res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
@@ -152,11 +162,11 @@ export default {
     },
     getUserList: async (req, res) => {
         const { role } = req.params;
-        console.log("\n", role);
+        // console.log("\n", role);
         if (role) {
             try {
 
-                const userList = await Users.findAll({ where: { role: role }, attributes: ['id', 'firstName', 'lastName','email','contactNumber'] })
+                const userList = await Users.findAll({ where: { role: role }, attributes: ['id', 'firstName', 'lastName', 'email', 'contactNumber'] })
                 res.status(200).json({ error: false, userList });
             } catch (error) {
                 res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
@@ -180,14 +190,14 @@ export default {
                         // console.log(result.dataValues);
                         const { rackID } = result;
                         const positionName = result.dataValues.positionName;
-                        const positionID=result.dataValues.positionID;
+                        const positionID = result.dataValues.positionID;
                         if (rackID && positionName && positionID) {
                             let rack = Object.values(rackList).find((item) => item.rackID === rackID);
                             if (!rack) {
                                 rack = {
                                     rackID,
                                     position: [],
-                                    positionID:[]
+                                    positionID: []
                                 };
                                 rackList.push(rack);
                             }

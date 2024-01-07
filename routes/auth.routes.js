@@ -6,7 +6,7 @@ const router = express.Router();
 //middleware
 router.use('/changepassword', authMiddleware.checkUserAuth)
 router.use('/userprofile', authMiddleware.checkUserAuth)
-router.use('/regerate-access-token', authMiddleware.checkRefreshAuth)
+router.use('/regenerate-access-token', authMiddleware.checkRefreshAuth)
 
 //public routes
 router.post('/register', authController.registerUser)
@@ -15,6 +15,6 @@ router.post('/login', authController.userLogin)
 //private routes
 router.post('/changepassword', authController.changePassword)
 router.get('/userprofile', authController.userProfile)
-router.post('/regerate-access-token', authController.regenerateAccessToken)
+router.post('/regenerate-access-token', authController.regenerateAccessToken)
 
 export default router

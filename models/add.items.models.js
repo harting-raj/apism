@@ -68,6 +68,10 @@ const AddItems = sequelize.define('additems', {
     reorderQuantity: {
         type: DataTypes.INTEGER,
         allowNull: true,
+    },
+    positionName: {
+        type: DataTypes.STRING,
+        allowNull: true,
     }
 }, {
     timestamps: false

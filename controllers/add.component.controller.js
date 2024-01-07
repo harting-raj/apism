@@ -1,6 +1,7 @@
 import sequelize from '../config/database.js';
-import { Items, Racks, Bins, Positions } from '../models/associations.js';
-
+import { Items, Racks, Bins, Positions, Users } from '../models/associations.js';
+import { io } from "../app.js"
+import Notifications from '../models/notification.model.js';
 
 export default {
     addRack: async (req, res) => {
@@ -14,7 +15,7 @@ export default {
                 const rackIds = rackData.map((json) =>
                     json.rackID
                 )
-                console.log(rackIds);
+
                 const addedRackData = await Racks.findAll({ where: { rackID: rackIds } });
                 const addedRack = addedRackData.map((data) => data.rackID)
                 if (addedRack.length > 0) {
@@ -37,6 +38,7 @@ export default {
                         await Positions.bulkCreate(positions, { transaction: t });
 
                     })
+                    io.emit("database-updated");
                     res.status(201).json({ error: false, message: "Racks added Successfully" });
                 }
             }
@@ -48,7 +50,7 @@ export default {
     },
     addBin: async (req, res) => {
         try {
-            const binData = req.body;
+            const binData = req.body.bins;
             if (!binData) {
                 res.status(400).json({ error: true, message: "Operation failed: Body don't have data" });
             } else {
@@ -65,6 +67,10 @@ export default {
                     }
                     else {
                         const bins = await Bins.bulkCreate(binData, { individualHooks: true });
+                        const operatorDetail = await Users.findByPk(binData[0]['addedByID']);
+                        await Notifications.create({ title: 'Task Completed', message: `The task of adding bin is completed by ${operatorDetail.firstName}`,receiverType:'supervisor',priority:'normal' })
+                        io.emit("database-updated");
+                        io.emit("supervisor-notify", binData[0]['assignedByID'])
                         res.status(201).json({ error: false, message: "Bins added Successfully" });
                     }
 
@@ -72,36 +78,83 @@ export default {
             }
 
         } catch (error) {
-            console.log(error.message)
+
             res.status(500).json({ error: true, message: `Operation failed: ${error.message}` });
         }
     },
+    // addItem: async (req, res) => {
+    //     /*  Expecting input like this.
+    //     [
+    //     {
+    //   "itemID":"it@43",
+    //   "itemName":"Capcitor",
+    //   "binIDs":[["b@126",50],["b@125",60]],
+    //    "quantity":200,
+    //    "manufacturer":"Harting",
+    //    "reorderLevel":20,
+    //    "expiryDate":"2023-09-27 10:42:03",
+    //    "maxLimit":200
+    //     },
+    //     {
+    //   "itemID":"it@43",
+    //   "itemName":"Capcitor",
+    //    "binIDs":[["b@126",50],["b@125",60]],
+    //    "quantity":200,
+    //    "manufacturer":"Harting",
+    //    "reorderLevel":20,
+    //    "expiryDate":"2023-09-27 10:42:03",
+    //    "maxLimit":200
+    //     }
+    //     ]
+    //     */
+    //     const itemData = req.body;
+    //     if (!itemData) {
+    //         res.status(400).json({ error: true, message: "Operation failed: Body don't have data" });
+    //     }
+    //     else {
+    //         try {
+    //             sequelize.transaction(async (t) => {
+    //                 await Promise.all(itemData.map(async (item) => {
+    //                     const { binIDs, ...itemInfo } = item;
+    //                     const itemIsPresent = await Items.findByPk(itemInfo.itemID, { transaction: t });
+
+    //                     if (itemIsPresent) {
+    //                         itemIsPresent.totalQuantity += itemInfo.totalQuantity;
+    //                         await itemIsPresent.save({ transaction: t })
+    //                     } else {
+    //                         await Items.create(itemInfo, { transaction: t });
+    //                     }
+
+    //                     await Promise.all(
+
+    //                         binIDs.map(async (binInfo) => {
+    //                             console.log(binInfo[0]);
+    //                             const bin = await Bins.findByPk(binInfo[0]);
+    //                             if (bin.itemID !== itemInfo.itemID && bin.quantity > 0) {
+    //                                 res.status(400).json({ error: false, message: "Bin already have item" })
+    //                             }
+    //                             else {
+    //                                 bin.itemID = itemInfo.itemID;
+    //                                 bin.quantity = bin.quantity + binInfo[1];
+    //                                 await bin.save({ transaction: t })
+    //                             }
+
+    //                         }))
+    //                 }))
+
+
+    //                 res.status(201).json({ error: false, message: "Items added successfully" })
+    //             })
+    //         } catch (error) {
+    //             res.status(500).json({ error: true, message: `Operation failed: ${error.message}` });
+    //         }
+    //     }
+
+    // },
     addItem: async (req, res) => {
-        /*  Expecting input like this.
-        [
-        {
-      "itemID":"it@43",
-      "itemName":"Capcitor",
-      "binIDs":[["b@126",50],["b@125",60]],
-       "quantity":200,
-       "manufacturer":"Harting",
-       "reorderLevel":20,
-       "expiryDate":"2023-09-27 10:42:03",
-       "maxLimit":200
-        },
-        {
-      "itemID":"it@43",
-      "itemName":"Capcitor",
-       "binIDs":[["b@126",50],["b@125",60]],
-       "quantity":200,
-       "manufacturer":"Harting",
-       "reorderLevel":20,
-       "expiryDate":"2023-09-27 10:42:03",
-       "maxLimit":200
-        }
-        ]
-        */
-        const itemData = req.body;
+        const itemData = req.body.items
+        const { supervisor, operator } = req.body;
+        console.log(itemData);
         if (!itemData) {
             res.status(400).json({ error: true, message: "Operation failed: Body don't have data" });
         }
@@ -109,45 +162,37 @@ export default {
             try {
                 sequelize.transaction(async (t) => {
                     await Promise.all(itemData.map(async (item) => {
-                        const { binIDs, ...itemInfo } = item;
-                        const itemIsPresent = await Items.findByPk(itemInfo.itemID, { transaction: t });
-
+                        const itemIsPresent = await Items.findByPk(item.itemID, { transaction: t });
                         if (itemIsPresent) {
-                            itemIsPresent.totalQuantity += itemInfo.totalQuantity;
+                            itemIsPresent.totalQuantity += item.totalQuantity;
+                            const bin = await Bins.findByPk(item.binID, { transaction: t });
+                            bin.itemID = item.itemID;
+                            bin.quanity = item.totalQuantity;
+                            await bin.save({ transaction: t })
                             await itemIsPresent.save({ transaction: t })
                         } else {
-                            await Items.create(itemInfo, { transaction: t });
+                            const items = await Items.create(item, { transaction: t });
+                            const bin = await Bins.findByPk(item.binID, { transaction: t });
+                            bin.itemID = item.itemID;
+                            bin.quanity = item.totalQuantity;
+                            await bin.save({ transaction: t })
+                            console.log(items);
                         }
-
-                        await Promise.all(
-
-                            binIDs.map(async (binInfo) => {
-                                console.log(binInfo[0]);
-                                const bin = await Bins.findByPk(binInfo[0]);
-                                if (bin.itemID !== itemInfo.itemID && bin.quantity > 0) {
-                                    res.status(400).json({ error: false, message: "Bin already have item" })
-                                }
-                                else {
-                                    bin.itemID = itemInfo.itemID;
-                                    bin.quantity = bin.quantity + binInfo[1];
-                                    await bin.save({ transaction: t })
-                                }
-
-                            }))
                     }))
-
-
+                    const operatorDetail = await Users.findByPk(operator);
+                    await Notifications.create({ title: 'Task Completed', message: `The task of adding item is completed by ${operatorDetail.firstName}`,receiverType:'supervisor',priority:'normal' })
+                    io.emit("database-updated");
+                    io.emit("supervisor-notify", supervisor);
                     res.status(201).json({ error: false, message: "Items added successfully" })
                 })
             } catch (error) {
                 res.status(500).json({ error: true, message: `Operation failed: ${error.message}` });
             }
         }
-
     },
     addLevel: async (req, res) => {
         const { rackID, row } = req.body;
-        console.log(rackID, row);
+
         if (rackID && row) {
             try {
                 const rack = await Racks.findByPk(rackID);
@@ -164,6 +209,7 @@ export default {
                     }
                     await Positions.bulkCreate(positions, { transaction: t });
                 })
+                io.emit("database-updated");
                 res.status(201).json({ error: false, message: "Level added Successfully" });
 
             } catch (error) {

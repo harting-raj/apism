@@ -6,9 +6,11 @@ import removeComponentController from '../controllers/remove.component.controlle
 router.get('/:itemID', authMiddleware.checkUserAuth)
 router.get('/bins',authMiddleware.checkUserAuth)
 router.get('/racks',authMiddleware.checkUserAuth)
+router.get('/serve-item',authMiddleware.checkUserAuth)
 
 router.delete('/:itemID', removeComponentController.removeItem)
 router.delete('/bins', removeComponentController.removeBin)
 router.delete('/racks', removeComponentController.removeRack)
+router.post('/serve-item',removeComponentController.serveItem)
 
 export default router;

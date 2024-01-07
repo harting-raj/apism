@@ -9,6 +9,7 @@ import TransferBin from "./transfer.bin.model.js";
 import TransferItem from "./transferItem.js";
 import Tasks from "./task.model.js";
 import AddBins from "./add.bin.model.js";
+import BinLastAccessed from "./bin.last.accessed.js";
 
 
 Racks.belongsTo(Users, { foreignKey: 'addedByID', as: 'addedByUser' });
@@ -25,10 +26,10 @@ Bins.belongsTo(Racks, { foreignKey: 'rackID', tartgetKey: 'rackID', as: 'rack' }
 Bins.belongsTo(Items, { foreignKey: 'itemID', targetKey: 'itemID', as: 'item' })
 
 
-//task
+///task
 
 Tasks.hasMany(AddItems, { foreignKey: 'taskID', as: 'addItems' }),
-Tasks.hasMany(ServeItems, { foreignKey: 'taskID', as: 'serveItems' }),
+    Tasks.hasMany(ServeItems, { foreignKey: 'taskID', as: 'serveItems' }),
     Tasks.hasMany(TransferBin, { foreignKey: 'taskID', as: 'transferBins' }),
     Tasks.hasMany(TransferItem, { foreignKey: 'taskID', as: 'transferItems' })
 Tasks.hasMany(AddBins, { foreignKey: 'taskID', as: 'addBins' })
@@ -41,6 +42,11 @@ AddBins.belongsTo(Tasks, { foreignKey: 'taskID', as: 'task' })
 Tasks.belongsTo(Users, { foreignKey: 'supervisorID', as: 'supervisor' })
 Tasks.belongsTo(Users, { foreignKey: 'operatorID', as: 'operator' })
 
+/// others
+
+BinLastAccessed.belongsTo(Users, { foreignKey: 'userId', as: 'User' })
+BinLastAccessed.belongsTo(Bins, { foreignKey: 'binId', targetKey: 'binID', as: 'bin' })
+BinLastAccessed.belongsTo(Racks, { foreignKey: 'rackId', as: 'rack' })
 export {
     Racks,
     Items,

@@ -52,9 +52,9 @@ const Items = sequelize.define('items', {
         type: DataTypes.INTEGER,
         allowNull: true,
     }
-},{
+}, {
     timestamps: false
-  })
+})
 
 
 

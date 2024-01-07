@@ -1,5 +1,8 @@
 import sequelize from '../config/database.js';
 import { Positions, Bins, Items } from '../models/associations.js';
+import { io } from "../app.js"
+
+import Notifications from '../models/notification.model.js';
 export default {
     removeItem: async (req, res) => {
         const { itemID } = req.params;
@@ -12,7 +15,7 @@ export default {
                         await Promise.all(
                             bins.map(async (bin) => {
 
-                                await bin.update({ itemID: null ,quantity:0}, { transaction: t });
+                                await bin.update({ itemID: null, quantity: 0 }, { transaction: t });
                             }
                             )
                         )
@@ -33,6 +36,40 @@ export default {
 
         }
     },
+    serveItem: async (req, res) => {
+        const serveItemData = req.body.items;
+        const { supervisor, operator } = req.body;
+        console.log(serveItemData);
+        if (serveItemData) {
+            try {
+                sequelize.transaction(async (t) => {
+                    await Promise.all(serveItemData.map(async (item) => {
+                        const bin = await Bins.findOne({ where: { binID: item.binID } }, { transaction: t });
+                        const items = await Items.findOne({ where: { itemID: item.itemID } }, { transaction: t });
+                        bin.quantity = bin.quantity - item.quantity;
+                        items.totalQuantity = items.totalQuantity - item.quantity;
+                        await bin.save({ transaction: t });
+                        await items.save({ transaction: t });
+                        if(items.totalQuantity<=reorderLevel){
+                            await Notifications.create({ title: 'Low Quantity', message: `The item ${items.itemName} is low on quantity.`,receiverType:'supervisor',priority:'alert' });
+                            io.emit("supervisor-notify")
+                        }
+                        const operatorDetail = await Users.findByPk(operator);
+                    await Notifications.create({ title: 'Task Completed', message: `The task of serving item is completed by ${operatorDetail.firstName}`,receiverType:'supervisor',priority:'normal' })
+                    io.emit("database-updated");
+                    io.emit("supervisor-notify", supervisor);
+
+                        res.status(200).json({ error: false, message: "Item served successfully" })
+
+                    }))
+                })
+            } catch (error) {
+                res.status(500).json({ error: true, message: `Operation failed: ${error.message}` });
+            }
+        } else {
+            res.status(400).json({ error: true, message: "Internal server error" });
+        }
+    },
     removeBin: async (req, res) => {
         const { binID } = req.body;
         if (binID) {
@@ -40,10 +77,10 @@ export default {
                 const bin = await Bins.findByPk(binID);
                 if (bin) {
                     if (bin.quantity <= 0) {
-                        sequelize.transaction(async () => {
+                        sequelize.transaction(async (t) => {
                             bin.itemID = null;
-                            await bin.save()
-                            await Bins.destroy({ where: { binID: bin.binID } })
+                            await bin.save({ transaction: t })
+                            await Bins.destroy({ where: { binID: bin.binID } }, { transaction: t })
                         })
                         res.status(200).json({ error: false, message: "Bin removed successfully" })
                     }
