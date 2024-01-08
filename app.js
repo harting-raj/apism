@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
 
 
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync({ force: false }).then(() => {
   console.log('Database sunchronized')
 }).catch((error) => console.log("Database sync error", error));
 

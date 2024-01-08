@@ -55,7 +55,7 @@ export default {
                     const isMatch = await bcrypt.compare(password, user.password);
                     if (isMatch && role == user.role) { //check if email and password match
 
-                        const accessToken = jwt.sign({ userID: user.id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '1d' });
+                        const accessToken = jwt.sign({ userID: user.id }, process.env.ACCESS_TOKEN_KEY, { expiresIn: '5d' });
                         const refreshToken = jwt.sign({ userID: user.id }, process.env.REFRESH_TOKEN_KEY, { expiresIn: '30d' });
                         return res.status(200).json({ error: false, message: "Login successful", accessToken, refreshToken }); //return success message
                     }

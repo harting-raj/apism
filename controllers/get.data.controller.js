@@ -2,6 +2,7 @@ import { Sequelize, where, Op } from 'sequelize';
 import sequelize from '../config/database.js';
 import { Bins, Users, Racks, Items, Positions } from '../models/associations.js'
 import { binList, itemList, emptyBinsList } from '../utils/utils.js';
+import Notifications from '../models/notification.model.js';
 
 
 export default {
@@ -233,6 +234,15 @@ export default {
                 res.status(200).json({ rackList });
             }
         } catch (error) {
+            res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
+        }
+    },
+    getNotification:async(req,res)=>{
+        try{
+         const notifications=await Notifications.findAll();
+        // console.log(notifications);
+         res.status(200).json({error:true,notifications});
+        }catch(error){
             res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
         }
     }
