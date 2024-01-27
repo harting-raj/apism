@@ -45,7 +45,7 @@ Tasks.belongsTo(Users, { foreignKey: 'operatorID', as: 'operator' })
 /// others
 
 BinLastAccessed.belongsTo(Users, { foreignKey: 'userId', as: 'User' })
-BinLastAccessed.belongsTo(Bins, { foreignKey: 'binId', targetKey: 'binID', as: 'bin' })
+//BinLastAccessed.belongsTo(Bins, { foreignKey: 'binId', targetKey: 'binID', as: 'bin' })
 BinLastAccessed.belongsTo(Racks, { foreignKey: 'rackId', as: 'rack' })
 export {
     Racks,

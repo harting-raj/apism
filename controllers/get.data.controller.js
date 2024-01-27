@@ -237,13 +237,22 @@ export default {
             res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
         }
     },
-    getNotification:async(req,res)=>{
-        try{
-         const notifications=await Notifications.findAll();
-        // console.log(notifications);
-         res.status(200).json({error:true,notifications});
-        }catch(error){
+    getNotification: async (req, res) => {
+        try {
+            const notifications = await Notifications.findAll();
+            // console.log(notifications);
+            res.status(200).json({ error: true, notifications });
+        } catch (error) {
             res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
         }
-    }
+    },
+    getBinwithItem: async (req, res) => {
+        const { rackID } = req.body;
+        try {
+            const binWithItem = await Racks.findOne({ where: { rackID: rackID }, attributes: [], include: [{ model: Bins, as: 'bins', attributes: ['binID'], where: { itemID: { [Op.ne]: null } }, include: [{ model: Items, as: 'item', attributes: ['itemID', 'itemName', 'manufacturer'] }] }] });
+            res.status(200).json({ error: true, binWithItem });
+        } catch (error) {
+            res.status(500).json({ error: true, message: `Operation failed : ${error.message}` })
+        }
+    },
 }

@@ -9,16 +9,16 @@ const Bins = sequelize.define('bins', {
     },
     itemID: {
         type: DataTypes.STRING,
-        allowNull:true,
+        allowNull: true,
     },
-    category:{
-        type:DataTypes.STRING,
-        allowNull:true,
+    category: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     quantity: {
         type: DataTypes.INTEGER,
-        allowNull:false,
-        defaultValue:0,  
+        allowNull: false,
+        defaultValue: 0,
     },
     addedByID: {
         type: DataTypes.UUID,
@@ -28,7 +28,7 @@ const Bins = sequelize.define('bins', {
         type: DataTypes.UUID,
         allowNull: false,
     },
-    lastAccessedBy:{
+    lastAccessedBy: {
         type: DataTypes.UUID,
         allowNull: true,
     },
@@ -36,12 +36,16 @@ const Bins = sequelize.define('bins', {
         type: DataTypes.INTEGER,
         allowNull: false
     },
+    position: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
     rackID: {
         type: DataTypes.STRING,
         allowNull: false,
     },
-},{
+}, {
     timestamps: false
-  })
+})
 
 export default Bins

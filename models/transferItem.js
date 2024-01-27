@@ -31,6 +31,13 @@ const TransferItem=sequelize.define('transferitem',{
     sourceBinID:{
         type:DataTypes.STRING,
         allowNull:false,
+    },destinationPositionName:{
+        type:DataTypes.STRING,
+        allowNull:false,
+    },
+    sourcePositionName:{
+        type:DataTypes.STRING,
+        allowNull:false,
     }
 
 })

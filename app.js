@@ -34,15 +34,15 @@ io.on('connection', (socket) => {
 
   socket.on('claim-task', async (data) => {
     const { operatorID, taskID } = data;
-  
+
     const user = await Users.findOne({ where: { id: operatorID } });
-    const alreadyClaimed=await Tasks.findOne({where:{taskID:taskID},attributes:"operatorID"});
-    if(alreadyClaimed.dataValues.operatorID==null || alreadyClaimed.dataValues.operatorID==''){
-      const task = await Tasks.update({ status: 1, operatorID: operatorID, operatorName: user.firstName ?? "" }, { where: { taskID: taskID } })
-      console.log(task);
-      io.emit("claim-success",task.dataValues.taskID );
-    }
-    
+    // const alreadyClaimed = await Tasks.findOne({ where: { taskID: taskID }, attributes: "operatorID" });
+    // if (alreadyClaimed.dataValues.operatorID == null || alreadyClaimed.dataValues.operatorID == '') {
+    const task = await Tasks.update({ status: 1, operatorID: operatorID, operatorName: user.firstName ?? "" }, { where: { taskID: taskID } })
+    console.log(task);
+    io.emit("claim-success");
+    //}
+
   });
   socket.on('status-update', async (data) => {
     const { taskID, status } = data;
@@ -75,18 +75,18 @@ io.on('connection', (socket) => {
   socket.on('unlock', async (data) => {
     console.log(data);
     const { status, rackID, positionName, binId, userId } = data;
-    Users.findByPk(userId).then((data)=>{
-     BinLastAccessed.create({ rackId: rackID, positionName: positionName, binId: binId ?? '',firstName:data.dataValues.firstName, userId: userId }).then(() => {
-      io.emit('database-updated')
-    }).catch((e) => console.log(e));
+    Users.findByPk(userId).then((data) => {
+      BinLastAccessed.create({ rackId: rackID, positionName: positionName, binId: binId ?? '', firstName: data.dataValues.firstName, userId: userId }).then(() => {
+        io.emit('database-updated')
+      }).catch((e) => console.log(e));
 
-    io.emit('unlock-position', {
-      "status": status,
-      "rackID": rackID,
-      "positionName": positionName
+      io.emit('unlock-position', {
+        "status": status,
+        "rackID": rackID,
+        "positionName": positionName
+      })
     })
-    })
-    
+
   });
 
   socket.on('bin-status-enquiry', async (data) => {

@@ -50,14 +50,14 @@ export default {
                         items.totalQuantity = items.totalQuantity - item.quantity;
                         await bin.save({ transaction: t });
                         await items.save({ transaction: t });
-                        if(items.totalQuantity<=reorderLevel){
-                            await Notifications.create({ title: 'Low Quantity', message: `The item ${items.itemName} is low on quantity.`,receiverType:'supervisor',priority:'alert' });
+                        if (items.totalQuantity <= reorderLevel) {
+                            await Notifications.create({ title: 'Low Quantity', message: `The item ${items.itemName} is low on quantity.`, receiverType: 'supervisor', priority: 'alert' });
                             io.emit("supervisor-notify")
                         }
                         const operatorDetail = await Users.findByPk(operator);
-                    await Notifications.create({ title: 'Task Completed', message: `The task of serving item is completed by ${operatorDetail.firstName}`,receiverType:'supervisor',priority:'normal' })
-                    io.emit("database-updated");
-                    io.emit("supervisor-notify", supervisor);
+                        await Notifications.create({ title: 'Task Completed', message: `The task of serving item is completed by ${operatorDetail.firstName}`, receiverType: 'supervisor', priority: 'normal' })
+                        io.emit("database-updated");
+                        io.emit("supervisor-notify", supervisor);
 
                         res.status(200).json({ error: false, message: "Item served successfully" })
 
@@ -72,6 +72,7 @@ export default {
     },
     removeBin: async (req, res) => {
         const { binID } = req.body;
+        console.log(binID + " hiii ");
         if (binID) {
             try {
                 const bin = await Bins.findByPk(binID);
@@ -83,6 +84,7 @@ export default {
                             await Bins.destroy({ where: { binID: bin.binID } }, { transaction: t })
                         })
                         res.status(200).json({ error: false, message: "Bin removed successfully" })
+                        io.emit("database-updated");
                     }
                     else {
                         res.status(400).json({ error: true, message: `Operation failed: Bin with id: ${binID} is not empty` });

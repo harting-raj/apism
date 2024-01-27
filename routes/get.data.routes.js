@@ -17,6 +17,7 @@ router.use('/lowquantity', authMiddleware.checkUserAuth)
 router.use('/exireditems', authMiddleware.checkUserAuth)
 router.use('/gettasknumber', authMiddleware.checkUserAuth)
 router.use('/getNotification', authMiddleware.checkUserAuth)
+router.use('/getBinwithItem', authMiddleware.checkUserAuth)
 
 
 
@@ -36,5 +37,6 @@ router.get('/rackwithbins', getDataController.getRackWithBins)
 router.get('/gettasknumber', getReportController.getTaskNumber)
 router.get('/getLastAccessedList',getReportController.getLastAccessedList)
 router.get('/getNotification',getDataController.getNotification)
+router.get('/getBinwithItem',getDataController.getBinwithItem)
 
 export default router;
